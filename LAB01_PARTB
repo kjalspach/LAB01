@@ -1,0 +1,76 @@
+;*****************************************************************
+;* This stationery serves as the framework for a                 *
+;* user application (single file, absolute assembly application) *
+;* For a more comprehensive program that                         *
+;* demonstrates the more advanced functionality of this          *
+;* processor, please see the demonstration applications          *
+;* located in the examples subdirectory of the                   *
+;* Freescale CodeWarrior for the HC12 Program directory          *
+;*****************************************************************
+
+; export symbols
+            XDEF Entry, _Startup            ; export 'Entry' symbol
+            ABSENTRY Entry        ; for absolute assembly: mark this as application entry point
+
+
+; Include derivative-specific definitions 
+		INCLUDE 'derivative.inc' 
+
+ROMStart    EQU  $4000  ; absolute address to place my code/constant data
+Temps_Count EQU  10
+
+; variable/data section
+
+            ORG RAMStart
+ ; Insert here your data definition.
+Cels:		DS.W 10
+Counter     DS.B 1
+
+
+; code section
+            ORG   ROMStart
+
+
+Entry:
+_Startup:
+            LDS   #RAMEnd+1       ; initialize the stack pointer
+            MOVB #Temps_Count,Counter
+            LDX #Fahrs
+            LDY #Cels
+            
+L1:			INX
+			LDAA #0
+			STAA 0,Y
+			INY
+			LDAB 0,X
+			JSR m95
+			STAB 0,Y
+			INX
+			INY
+			DEC Counter
+			BNE L1
+			
+			BRA $
+			
+m95:		SUBB #32
+			BCC NEXT
+			NEGB
+NEXT:		LDAA #5
+			MUL
+			PSHX
+			LDX #9
+			IDIV
+			TFR X,D
+			PULX
+			NEGB
+			ADCB #1
+			RTS
+			
+; an array of 10 constant words!
+Fahrs: dc.w 0,20,40,60,80,100,120,140,160,180			
+
+;**************************************************************
+;*                 Interrupt Vectors                          *
+;**************************************************************
+            ORG   $FFFE
+            DC.W  Entry           ; Reset Vector
